@@ -17,4 +17,5 @@ Ideally, the first argument should be implicit and left to Idris to figure out. 
 `T6Q2.idr` - "If `f` : Nat -> Nat is computable and strictly increasing, show that the range of `f` is computable." Translating to Idris, it means that I need to model what it means for a function to be strictly increasing and write a function that, given a target `t`, either:
 - Returns a natural number `x` and a proof that `f(x) = t`
 - Returns a proof that there does not exist an `x` such that `f(x) = t`.
+
 The file contains this funtion, and related lemmas. Since this is for practice, I also decided to implement my own model for the strictly greater than relation `>` instead of using the one from `Data.Nat`. Therefore, a good chunk of the proof is showing properties of `>`, e.g. transitivity, `0 > x` is uninhabited, etc.

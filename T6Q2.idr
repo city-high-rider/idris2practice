@@ -67,16 +67,16 @@ Because the function is strictly increasing, this has to be bigger than t + 1.
 randomLemma : a = b -> c `MoreThan` a -> c `MoreThan` b
 randomLemma Refl x = x
 
-itsInTheFuckingName : {a : _} -> Not (a = 0) -> NonZero a
-itsInTheFuckingName {a = 0} f = void (f Refl)
-itsInTheFuckingName {a = (S k)} f = SIsNonZero
+itsInTheName : {a : _} -> Not (a = 0) -> NonZero a
+itsInTheName {a = 0} f = void (f Refl)
+itsInTheName {a = (S k)} f = SIsNonZero
 
 fOneGtZ : StrictlyIncreasing f -> f 1 `MoreThan` 0
 fOneGtZ (Indeed f prfGen) =
   let fOneGtFZero : (f 1 `MoreThan` f 0) = prfGen 1 0 (SucGTZ SIsNonZero) in
       case f 0 `decEq` 0 of
            (Yes prf) => randomLemma prf fOneGtFZero
-           (No contra) => let fZNonZero : (NonZero (f 0)) = itsInTheFuckingName contra
+           (No contra) => let fZNonZero : (NonZero (f 0)) = itsInTheName contra
                               fZGtZ : (f 0 `MoreThan` 0) = SucGTZ fZNonZero in gtTransitive fOneGtFZero fZGtZ
 
 -- Inductive step:
