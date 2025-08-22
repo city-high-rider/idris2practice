@@ -19,3 +19,5 @@ Ideally, the first argument should be implicit and left to Idris to figure out. 
 - Returns a proof that there does not exist an `x` such that `f(x) = t`.
 
 The file contains this funtion, and related lemmas. Since this is for practice, I also decided to implement my own model for the strictly greater than relation `>` instead of using the one from `Data.Nat`. Therefore, a good chunk of the proof is showing properties of `>`, e.g. transitivity, `0 > x` is uninhabited, etc.
+
+`Div3.idr` - "Can there exist a number consisting of exactly 200 '1's and 200 '2's in any order that is a perfect square?" The answer is no, and I am trying to prove that in this module. It was a lot harder than expected, but I am also learning a lot. **this one's a work in progress.**
