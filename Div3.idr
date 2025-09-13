@@ -103,6 +103,77 @@ total
 divides : (a : Nat) -> (b : Nat) -> Type
 a `divides` b = (k ** k * a = b)
 
+||| Proof that a is congruent to b mod n
+total
+congMod : Nat -> Nat -> Nat -> Type
+congMod n a b = (k ** a = b + k * n)
+
+||| if a = c mod n and b = d mod n, then a * b = c * d mod n
+total
+congOverMul : {n, a, b, c, d : Nat} -> congMod n a c -> congMod n b d -> congMod n (a * b) (c * d)
+congOverMul ((s ** aWithS)) ((t ** bWithT)) =
+  -- a*b = cd + kn 
+  rewrite aWithS in
+      rewrite bWithT in
+      -- (c + sn) * (d + tn) = cd + kn
+          rewrite multDistributesOverPlusRight (c + s*n) d (t * n) in
+          -- (c+sn)*d + (c+sn)*tn = cd + kn
+              rewrite multDistributesOverPlusLeft c (s*n) d in
+              -- (cd + (sn)d) + ((c+sn)*tn) = cd + kn
+                  rewrite sym (plusAssociative (c*d) ((s*n)*d) ((c+s*n)*(t*n))) in
+                  -- cd + ((sn)d + ((c + sn) * tn)) = cd + kn
+                      rewrite multAssociative (c+s*n) t n in
+                      -- cd + ((sn)d + (((c + sn) * t) * n)) = cd + kn
+                          rewrite multCommutative s n in
+                          -- cd + ((ns)d + (((c + sn) * t) * n)) = cd + kn
+                              rewrite sym (multAssociative n s d) in
+                              -- cd + (n(sd) + (((c + sn) * t) * n)) = cd + kn
+                                  rewrite multCommutative n (s*d) in
+                                  -- cd + ((sd)n + (((c + sn) * t) * n)) = cd + kn
+                                      rewrite sym (multDistributesOverPlusLeft (s*d) ((c+(n*s))*t) n) in
+                                      -- cd + ((sd + ((c + ns) * t)) * n) = cd + kn
+                                      -- where k = (sd + ((c + ns) * t))
+                                        (((s*d)+((c+(n*s))*t)) ** Refl)
+
+
+||| 10 = 1 mod 3
+total
+tenCong1In3 : congMod 3 10 1
+tenCong1In3 = (3 ** Refl)
+
+||| Any power of 10 is congruent to 1 mod 3
+total
+power10C1Mod3 : {p : Nat} -> congMod 3 (power 10 p) 1
+power10C1Mod3 {p = 0} = (0 ** Refl)
+power10C1Mod3 {p = (S k)} = 
+  -- We need to swap the *10 to the right, otherwise Idris will be too helpful and expand this as 
+  -- a bunch of plusses, which we don't want as we're trying to distribute congruence over multiplication.
+  rewrite multCommutative 10 (power 10 k) in
+    congOverMul {n=3, a=(power 10 k), b=10, c=1, d=1} power10C1Mod3 tenCong1In3 
+
+{-
+The proof will be by contradiction.
+Suppose K is a square. Then there must be a root R such that K = R * R.
+
+There are 400 digits in the decimal representation of K. 200 of them are 1s, and 200 of them are 2s.
+Therefore, the sum of the digits of K is 600.
+
+Since the sum of the digits of K is 600, which is divisible by 3, it means that K is divisible by 3.
+Therefore there is some T such that K = 3*T
+
+Since the sum of the digits of K is 600, which is not divisible by 9, it means that K is not divisible by 9.
+
+Since 3 is prime and it divides K, which is R * R, that means 3 must also divide R.
+
+Since 3 divides R, there is some S such that R = 3S.
+
+By substitution, K = (3S) * (3S) or K = 9*(s*s)
+
+Therefore, K is divisible by 9. This contradicts the previous statement which says K is not divisible by 9.
+
+We have reached a contradiction - this means K cannot be square, as required. QED
+-}
+
 public export total
 puzzle : (d : Decimal k) -> numDigits d = 400 -> (d `countThe` (==1)) = 200 -> (d `countThe` (==2)) = 200 -> Not (Square k)
 puzzle d nd400 hundred1s hundred2s kSquare = ?puzzle_rhs
