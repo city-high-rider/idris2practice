@@ -48,11 +48,12 @@ delight k (S j) = plus k (delight k j)
 public export total
 soothe : {d : Nat} -> abhorrence k d = S (plus d (delight k d))
 soothe {d = 0} = Refl
-soothe {d = (S j)} = rewrite soothe {k = k, d = j} in
-                             rewrite sym (plusSuccRightSucc k (plus j (delight k j))) in
-                                     rewrite plusAssociative j k (delight k j) in
-                                             rewrite plusCommutative j k in
-                                                     rewrite sym (plusAssociative k j (delight k j)) in Refl
+soothe {d = (S j)} =
+  rewrite soothe {k = k, d = j} in
+  rewrite sym (plusSuccRightSucc k (plus j (delight k j))) in
+  rewrite plusAssociative j k (delight k j) in
+  rewrite plusCommutative j k in
+  rewrite sym (plusAssociative k j (delight k j)) in Refl
 
 public export total
 bump_carry : Decimal (abhorrence k 9) -> Decimal (plus 10 (delight k 9))
@@ -114,26 +115,26 @@ congOverMul : {n, a, b, c, d : Nat} -> congMod n a c -> congMod n b d -> congMod
 congOverMul ((s ** aWithS)) ((t ** bWithT)) =
   -- a*b = cd + kn 
   rewrite aWithS in
-      rewrite bWithT in
-      -- (c + sn) * (d + tn) = cd + kn
-          rewrite multDistributesOverPlusRight (c + s*n) d (t * n) in
-          -- (c+sn)*d + (c+sn)*tn = cd + kn
-              rewrite multDistributesOverPlusLeft c (s*n) d in
-              -- (cd + (sn)d) + ((c+sn)*tn) = cd + kn
-                  rewrite sym (plusAssociative (c*d) ((s*n)*d) ((c+s*n)*(t*n))) in
-                  -- cd + ((sn)d + ((c + sn) * tn)) = cd + kn
-                      rewrite multAssociative (c+s*n) t n in
-                      -- cd + ((sn)d + (((c + sn) * t) * n)) = cd + kn
-                          rewrite multCommutative s n in
-                          -- cd + ((ns)d + (((c + sn) * t) * n)) = cd + kn
-                              rewrite sym (multAssociative n s d) in
-                              -- cd + (n(sd) + (((c + sn) * t) * n)) = cd + kn
-                                  rewrite multCommutative n (s*d) in
-                                  -- cd + ((sd)n + (((c + sn) * t) * n)) = cd + kn
-                                      rewrite sym (multDistributesOverPlusLeft (s*d) ((c+(n*s))*t) n) in
-                                      -- cd + ((sd + ((c + ns) * t)) * n) = cd + kn
-                                      -- where k = (sd + ((c + ns) * t))
-                                        (((s*d)+((c+(n*s))*t)) ** Refl)
+  rewrite bWithT in
+  -- (c + sn) * (d + tn) = cd + kn
+  rewrite multDistributesOverPlusRight (c + s*n) d (t * n) in
+  -- (c+sn)*d + (c+sn)*tn = cd + kn
+  rewrite multDistributesOverPlusLeft c (s*n) d in
+  -- (cd + (sn)d) + ((c+sn)*tn) = cd + kn
+  rewrite sym (plusAssociative (c*d) ((s*n)*d) ((c+s*n)*(t*n))) in
+  -- cd + ((sn)d + ((c + sn) * tn)) = cd + kn
+  rewrite multAssociative (c+s*n) t n in
+  -- cd + ((sn)d + (((c + sn) * t) * n)) = cd + kn
+  rewrite multCommutative s n in
+  -- cd + ((ns)d + (((c + sn) * t) * n)) = cd + kn
+  rewrite sym (multAssociative n s d) in
+  -- cd + (n(sd) + (((c + sn) * t) * n)) = cd + kn
+  rewrite multCommutative n (s*d) in
+  -- cd + ((sd)n + (((c + sn) * t) * n)) = cd + kn
+  rewrite sym (multDistributesOverPlusLeft (s*d) ((c+(n*s))*t) n) in
+  -- cd + ((sd + ((c + ns) * t)) * n) = cd + kn
+  -- where k = (sd + ((c + ns) * t))
+  (((s*d)+((c+(n*s))*t)) ** Refl)
 
 
 ||| 10 = 1 mod 3
