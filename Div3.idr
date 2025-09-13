@@ -151,6 +151,30 @@ power10C1Mod3 {p = (S k)} =
   rewrite multCommutative 10 (power 10 k) in
     congOverMul {n=3, a=(power 10 k), b=10, c=1, d=1} power10C1Mod3 tenCong1In3 
 
+||| if a = c mod n and b = d mod n, then a + b = a' + b' mod n
+||| i.e. congruence is preserved under addition.
+total
+congOverPlus : {n,a,b,c,d : Nat} -> congMod n a c -> congMod n b d -> congMod n (a + b) (c + d)
+congOverPlus ((s ** aWithS)) ((t ** bWithT)) = 
+  rewrite aWithS in
+  rewrite bWithT in
+  -- (c + sn) + (d + tn) = (c+d) + kn
+  rewrite sym (plusAssociative c (s*n) (d + t*n)) in
+  -- c + (sn + (d + tn)) = (c+d) + kn
+  rewrite plusCommutative (s*n) (d+t*n) in
+  -- c + ((d + tn) + sn) = (c+d) + kn
+  rewrite sym (plusAssociative d (t*n) (s * n)) in
+  -- c + (d + (tn + sn)) = (c+d) + kn
+  rewrite plusAssociative c d (t*n + s*n) in
+  -- (c + d) + (tn + sn) = (c+d) + kn
+  rewrite sym (multDistributesOverPlusLeft t s n) in
+  -- (c + d) + (t + s)n = (c+d) + kn
+  -- where k = t + s
+  ((t+s) ** Refl)
+
+total
+sumDigitsDiv3NumDiv3 : {k : Nat} -> (d : Decimal k) -> 3 `divides` sumDigits d -> 3 `divides` k
+
 {-
 The proof will be by contradiction.
 Suppose K is a square. Then there must be a root R such that K = R * R.
