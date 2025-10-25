@@ -107,7 +107,7 @@ a `divides` b = (k ** k * a = b)
 ||| Proof that a is congruent to b mod n
 total
 congMod : Nat -> Nat -> Nat -> Type
-congMod n a b = (k ** a = b + k * n)
+congMod n a b = (j ** a = b + j * n)
 
 ||| if a = c mod n and b = d mod n, then a * b = c * d mod n
 total
@@ -174,8 +174,37 @@ congOverPlus ((s ** aWithS)) ((t ** bWithT)) =
   ((t+s) ** Refl)
 
 total
-sumDigitsDiv3NumDiv3 : {k : Nat} -> (d : Decimal k) -> 3 `divides` sumDigits d -> 3 `divides` k
+nestedMultSwap : (left : Nat) -> (center : Nat) -> (right : Nat) -> (left*center)*right = (left*right)*center
+nestedMultSwap left center right=
+  rewrite sym (multAssociative left center right) in
+  rewrite multCommutative center right in
+  rewrite multAssociative left right center in Refl
 
+total
+factor3from9 : (a : Nat) -> a * 9 = (a*3)*3
+factor3from9 a =
+  rewrite sym (multAssociative a 3 3) in Refl
+
+||| a number is equal to the sum of its digits mod 3.
+total
+kCongDigits3 : (d : Decimal n) -> congMod 3 n (sumDigits d)
+kCongDigits3 (MostSig digit) = (0 ** rewrite plusZeroRightNeutral (finToNat digit) in Refl)
+kCongDigits3 (digit <: rest) = let (h ** prf) = kCongDigits3 rest in
+  rewrite prf in
+  rewrite multCommutative 10 (sumDigits rest + h*3) in
+  rewrite multDistributesOverPlusLeft (sumDigits rest) (h*3) 10 in
+  rewrite multRightSuccPlus (sumDigits rest) 9 in
+  rewrite sym (plusAssociative (sumDigits rest) ((sumDigits rest) * 9) ((h*3)*10)) in
+  rewrite plusAssociative (finToNat digit) (sumDigits rest) ((sumDigits rest)*9 + (h*3)*10) in
+  rewrite nestedMultSwap h 3 10 in
+  rewrite factor3from9 (sumDigits rest) in
+  rewrite sym (multDistributesOverPlusLeft (mult (sumDigits rest) 3) (mult h 10) 3) in
+  ((plus (mult (sumDigits rest) 3) (mult h 10)) ** Refl)
+
+total
+sumDigitsDiv3NumDiv3 : {n : Nat} -> (d : Decimal n) -> 3 `divides` sumDigits d -> 3 `divides` n
+sumDigitsDiv3NumDiv3 (MostSig digit) ((t ** sdWithT)) = rewrite sym sdWithT in (t ** Refl)
+sumDigitsDiv3NumDiv3 (digit <: rest) ((t ** sdWithT)) = ?h
 {-
 The proof will be by contradiction.
 Suppose K is a square. Then there must be a root R such that K = R * R.
