@@ -109,6 +109,26 @@ total
 congMod : Nat -> Nat -> Nat -> Type
 congMod n a b = (j ** a = b + j * n)
 
+||| if a is congruent to 0 mod n, then n divides a
+total
+congZeroDivides : congMod n a 0 -> n `divides` a
+congZeroDivides (h ** prf) = rewrite prf in (h ** Refl)
+
+||| if n divides a, then a is congruent to zero mod n
+total
+dividesCongZero : n `divides` a -> congMod n a 0
+dividesCongZero (fac ** prf) = rewrite sym prf in (fac ** Refl)
+
+||| If a is congruent to b mod n, and b is congruent to c mod n, a is congruent to c mod n
+total
+congTrans : congMod n left centre -> congMod n centre right -> congMod n left right
+congTrans (x ** prf1) (y ** prf2) =
+  rewrite prf1 in
+  rewrite prf2 in
+  rewrite sym (plusAssociative right (y*n) (x*n)) in
+  rewrite sym (multDistributesOverPlusLeft y x n) in
+  (plus y x ** Refl)
+
 ||| if a = c mod n and b = d mod n, then a * b = c * d mod n
 total
 congOverMul : {n, a, b, c, d : Nat} -> congMod n a c -> congMod n b d -> congMod n (a * b) (c * d)
@@ -203,8 +223,17 @@ kCongDigits3 (digit <: rest) = let (h ** prf) = kCongDigits3 rest in
 
 total
 sumDigitsDiv3NumDiv3 : {n : Nat} -> (d : Decimal n) -> 3 `divides` sumDigits d -> 3 `divides` n
-sumDigitsDiv3NumDiv3 (MostSig digit) ((t ** sdWithT)) = rewrite sym sdWithT in (t ** Refl)
-sumDigitsDiv3NumDiv3 (digit <: rest) ((t ** sdWithT)) = ?h
+sumDigitsDiv3NumDiv3 d div3 = let
+  -- Since 3 divides the sum of the digits, the sum of the digits is zero mod 3.
+  p1 : (congMod 3 (sumDigits d) 0) = dividesCongZero div3
+  -- Our number is congruent to the sum of its digits mod 3
+  p2 : (congMod 3 n (sumDigits d)) = kCongDigits3 d
+  -- By transitivity, our number is congruent to zero mod 3.
+  p3 : (congMod 3 n 0) = congTrans {n=3, left=n, centre=(sumDigits d), right = 0} p2 p1
+  -- Since our number is congruent to zero mod 3, it means it's divisible by 3.
+  in
+  congZeroDivides p3
+
 {-
 The proof will be by contradiction.
 Suppose K is a square. Then there must be a root R such that K = R * R.
