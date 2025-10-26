@@ -104,15 +104,72 @@ total
 divides : (a : Nat) -> (b : Nat) -> Type
 a `divides` b = (k ** k * a = b)
 
+total
+sumFactorsIsFactor : n `divides` a -> n `divides` b -> n `divides` (a + b)
+sumFactorsIsFactor (fac1 ** prf1) (fac2 ** prf2) =
+  rewrite sym prf1 in
+  rewrite sym prf2 in
+  rewrite sym (multDistributesOverPlusLeft fac1 fac2 n) in
+  (fac1 + fac2 ** Refl)
+
+total
+dist : Nat -> Nat -> Nat
+dist 0 j = j
+dist j 0 = j
+dist (S k) (S x) = dist k x
+
+total
+distZeroRightNeutral : (a : Nat) -> a `dist` 0 = a
+distZeroRightNeutral 0 = Refl
+distZeroRightNeutral (S k) = Refl
+
+total
+distRelativeLeft : (shift : Nat) -> (shift + a) `dist` (shift + b) = a `dist` b
+distRelativeLeft 0 = Refl
+distRelativeLeft (S k) = rewrite distRelativeLeft {a = a, b = b} k in Refl
+
+total
+multDistributesOverDistLeft : (a,b,n : Nat) -> (a `dist` b) * n = ((a*n) `dist` (b*n))
+multDistributesOverDistLeft 0 0 0 = Refl
+multDistributesOverDistLeft 0 0 (S k) = Refl
+multDistributesOverDistLeft 0 (S k) 0 = Refl
+multDistributesOverDistLeft 0 (S k) (S j) = Refl
+multDistributesOverDistLeft (S k) 0 0 = rewrite multZeroRightZero k in Refl
+multDistributesOverDistLeft (S k) 0 (S j) = Refl
+multDistributesOverDistLeft (S k) (S j) 0 =
+  rewrite multZeroRightZero k in
+  rewrite multZeroRightZero j in
+  rewrite multZeroRightZero (dist k j) in
+  Refl
+multDistributesOverDistLeft (S k) (S j) (S i) =
+  let
+  ind = sym (multDistributesOverDistLeft k j (S i)) 
+  in
+  rewrite multRightSuccPlus (dist k j) i in
+  rewrite distRelativeLeft {a=k*(S i), b=j*(S i)} i in
+  rewrite ind in
+  rewrite multRightSuccPlus (dist k j) i in
+  Refl
+
+total
+distFactorsIsFactor : n `divides` a -> n `divides` b -> n `divides` (a `dist` b)
+distFactorsIsFactor (fac1 ** prf1) (fac2 ** prf2) =
+  rewrite sym prf1 in
+  rewrite sym prf2 in
+  rewrite sym (multDistributesOverDistLeft fac1 fac2 n) in
+	(fac1 `dist` fac2 ** Refl)
+
+{-
+
 ||| Proof that a is congruent to b mod n
 total
 congMod : Nat -> Nat -> Nat -> Type
-congMod n a b = (j ** a = b + j * n)
+congMod n a b = n `divides` (b `dist` a)
 
 ||| if a is congruent to 0 mod n, then n divides a
 total
 congZeroDivides : congMod n a 0 -> n `divides` a
-congZeroDivides (h ** prf) = rewrite prf in (h ** Refl)
+congZeroDivides (h ** prf) = rewrite sym prf in (h ** Refl)
 
 ||| if n divides a, then a is congruent to zero mod n
 total
@@ -122,76 +179,14 @@ dividesCongZero (fac ** prf) = rewrite sym prf in (fac ** Refl)
 ||| If a is congruent to b mod n, and b is congruent to c mod n, a is congruent to c mod n
 total
 congTrans : congMod n left centre -> congMod n centre right -> congMod n left right
-congTrans (x ** prf1) (y ** prf2) =
-  rewrite prf1 in
-  rewrite prf2 in
-  rewrite sym (plusAssociative right (y*n) (x*n)) in
-  rewrite sym (multDistributesOverPlusLeft y x n) in
-  (plus y x ** Refl)
+congTrans (x ** prf1) (y ** prf2) = ?congTrans_rhs_0
 
-||| if a = c mod n and b = d mod n, then a * b = c * d mod n
+
+
+||| If a is congruent to b mod n, then b is congruent to a mod n
 total
-congOverMul : {n, a, b, c, d : Nat} -> congMod n a c -> congMod n b d -> congMod n (a * b) (c * d)
-congOverMul ((s ** aWithS)) ((t ** bWithT)) =
-  -- a*b = cd + kn 
-  rewrite aWithS in
-  rewrite bWithT in
-  -- (c + sn) * (d + tn) = cd + kn
-  rewrite multDistributesOverPlusRight (c + s*n) d (t * n) in
-  -- (c+sn)*d + (c+sn)*tn = cd + kn
-  rewrite multDistributesOverPlusLeft c (s*n) d in
-  -- (cd + (sn)d) + ((c+sn)*tn) = cd + kn
-  rewrite sym (plusAssociative (c*d) ((s*n)*d) ((c+s*n)*(t*n))) in
-  -- cd + ((sn)d + ((c + sn) * tn)) = cd + kn
-  rewrite multAssociative (c+s*n) t n in
-  -- cd + ((sn)d + (((c + sn) * t) * n)) = cd + kn
-  rewrite multCommutative s n in
-  -- cd + ((ns)d + (((c + sn) * t) * n)) = cd + kn
-  rewrite sym (multAssociative n s d) in
-  -- cd + (n(sd) + (((c + sn) * t) * n)) = cd + kn
-  rewrite multCommutative n (s*d) in
-  -- cd + ((sd)n + (((c + sn) * t) * n)) = cd + kn
-  rewrite sym (multDistributesOverPlusLeft (s*d) ((c+(n*s))*t) n) in
-  -- cd + ((sd + ((c + ns) * t)) * n) = cd + kn
-  -- where k = (sd + ((c + ns) * t))
-  (((s*d)+((c+(n*s))*t)) ** Refl)
-
-
-||| 10 = 1 mod 3
-total
-tenCong1In3 : congMod 3 10 1
-tenCong1In3 = (3 ** Refl)
-
-||| Any power of 10 is congruent to 1 mod 3
-total
-power10C1Mod3 : {p : Nat} -> congMod 3 (power 10 p) 1
-power10C1Mod3 {p = 0} = (0 ** Refl)
-power10C1Mod3 {p = (S k)} = 
-  -- We need to swap the *10 to the right, otherwise Idris will be too helpful and expand this as 
-  -- a bunch of plusses, which we don't want as we're trying to distribute congruence over multiplication.
-  rewrite multCommutative 10 (power 10 k) in
-    congOverMul {n=3, a=(power 10 k), b=10, c=1, d=1} power10C1Mod3 tenCong1In3 
-
-||| if a = c mod n and b = d mod n, then a + b = a' + b' mod n
-||| i.e. congruence is preserved under addition.
-total
-congOverPlus : {n,a,b,c,d : Nat} -> congMod n a c -> congMod n b d -> congMod n (a + b) (c + d)
-congOverPlus ((s ** aWithS)) ((t ** bWithT)) = 
-  rewrite aWithS in
-  rewrite bWithT in
-  -- (c + sn) + (d + tn) = (c+d) + kn
-  rewrite sym (plusAssociative c (s*n) (d + t*n)) in
-  -- c + (sn + (d + tn)) = (c+d) + kn
-  rewrite plusCommutative (s*n) (d+t*n) in
-  -- c + ((d + tn) + sn) = (c+d) + kn
-  rewrite sym (plusAssociative d (t*n) (s * n)) in
-  -- c + (d + (tn + sn)) = (c+d) + kn
-  rewrite plusAssociative c d (t*n + s*n) in
-  -- (c + d) + (tn + sn) = (c+d) + kn
-  rewrite sym (multDistributesOverPlusLeft t s n) in
-  -- (c + d) + (t + s)n = (c+d) + kn
-  -- where k = t + s
-  ((t+s) ** Refl)
+congSym : congMod n a b -> congMod n b a
+congSym (x ** prf) = ?congSym_rhs_0
 
 total
 nestedMultSwap : (left : Nat) -> (center : Nat) -> (right : Nat) -> (left*center)*right = (left*right)*center
@@ -222,7 +217,7 @@ kCongDigits3 (digit <: rest) = let (h ** prf) = kCongDigits3 rest in
   ((plus (mult (sumDigits rest) 3) (mult h 10)) ** Refl)
 
 total
-sumDigitsDiv3NumDiv3 : {n : Nat} -> (d : Decimal n) -> 3 `divides` sumDigits d -> 3 `divides` n
+sumDigitsDiv3NumDiv3 : (d : Decimal n) -> 3 `divides` sumDigits d -> 3 `divides` n
 sumDigitsDiv3NumDiv3 d div3 = let
   -- Since 3 divides the sum of the digits, the sum of the digits is zero mod 3.
   p1 : (congMod 3 (sumDigits d) 0) = dividesCongZero div3
@@ -233,6 +228,35 @@ sumDigitsDiv3NumDiv3 d div3 = let
   -- Since our number is congruent to zero mod 3, it means it's divisible by 3.
   in
   congZeroDivides p3
+
+||| a number is equal to the sum of its digits mod 9.
+total
+kCongDigits9 : (d : Decimal n) -> congMod 9 n (sumDigits d)
+kCongDigits9 (MostSig digit) = (0 ** rewrite plusZeroRightNeutral (finToNat digit) in Refl)
+kCongDigits9 (digit <: rest) =
+  let (h ** prf) = kCongDigits9 rest in
+  rewrite prf in
+  rewrite multCommutative 10 (sumDigits rest + h*9) in
+  rewrite multDistributesOverPlusLeft (sumDigits rest) (h*9) 10 in
+  rewrite multRightSuccPlus (sumDigits rest) 9 in
+  rewrite sym (plusAssociative (sumDigits rest) ((sumDigits rest) * 9) ((h*9)*10)) in
+  rewrite plusAssociative (finToNat digit) (sumDigits rest) ((sumDigits rest)*9 + (h*9)*10) in
+  rewrite nestedMultSwap h 9 10 in
+  rewrite sym (multDistributesOverPlusLeft (sumDigits rest) (h*10) 9) in
+  (sumDigits rest + h*10 ** Refl)
+
+||| If 9 divides a number, then 9 divides the sum of the digits of that number.
+total
+numDiv9SumDigitsDiv9 : (d : Decimal n) -> 9 `divides` n -> 9 `divides` sumDigits d
+numDiv9SumDigitsDiv9 d div9 = let
+  -- 9 divides n, so n is congruent to 0 mod 9
+  p1 : (congMod 9 n 0) = dividesCongZero div9 
+  -- n is congruent to the sum of its digits mod 9
+  p2 : (congMod 9 n (sumDigits d)) = kCongDigits9 d
+  -- By symmetry, the sum of digits is congruent to n mod 9.
+  in
+  ?hole
+
 
 {-
 The proof will be by contradiction.
